@@ -1,12 +1,12 @@
 # Table of contents
 
 * ```yaml
-  type: builtin:api
+  type: builtin:openapi
   props:
     models: true
   dependencies:
     spec:
       ref:
-        kind: api
+        kind: openapi
         spec: test-4
   ```
