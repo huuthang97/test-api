@@ -21,7 +21,7 @@ paths:
   /catalogs:
     get:
       tags:
-        - Catalogs
+        - Catalogs test
       summary: List catalogs
       description: Returns a paginated list of catalogs. Use `updated_at_min` for incremental sync.
       operationId: listCatalogs
