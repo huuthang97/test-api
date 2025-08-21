@@ -1,185 +1,348 @@
 openapi: 3.0.3
 info:
-  title: GitBook Petstore API
-  version: 1.0.0
+  title: Teeinblue Print Partner API
   description: |
-    ## Petstore
-
-    Welcome to the Petstore API Documentation Template! This is a starting point for creating clear, interactive, and user-friendly API documentation. 
-
-    Use this template to explore best practices in structuring your docs, showcasing endpoints, and guiding users through your API. Everything here can be adapted to fit your own product.
-
-    {% hint style="info" %}
-    **Why this demo?**  
-    This template shows automatically generated docs from an OpenAPI spec. It uses [Gitbook-specific Open API extensions](https://gitbook.com/docs/extensions-reference) to create a rich, interactive experience.
-    {% endhint %}
-
-    {% tabs %}
-    {% tab title="Production" %}
-    **Base URL**  
-    `https://petstore.example.com/v1`
-    {% endtab %}
-
-    {% tab title="Staging" %}
-    **Base URL**  
-    `https://staging.petstore.example.com/v1`
-    {% endtab %}
-    {% endtabs %}
-
-    ### Getting Started
-    {% stepper %}
-    {% step %}
-    ### Create an account
-    Sign up for a free account at [petstore.example.com](https://petstore.example.com).
-    {% endstep %}
-    {% step %}
-    ### Get your API key 
-    Sign in to the Petstore console and copy your key.
-    {% endstep %}
-    {% step %}
-    ### Make your first request
-    Call the GET /pets endpoint to check connectivity.
-    {% endstep %}
-    {% endstepper %}
-
-    ### Learn more
-    <table data-view="cards"><thead><tr><th></th><th></th><th data-hidden data-card-cover data-type="files"></th><th data-hidden></th><th data-hidden data-card-target data-type="content-ref"></th></tr></thead><tbody><tr><td><strong>Documentation</strong></td><td>Everything you need to know about the product</td><td></td><td></td><td></td></tr><tr><td><strong>Changelog</strong></td><td>See whatâ€™s new and improved</td><td></td><td></td><td></td></tr><tr><td><strong>Community</strong></td><td>Connect with other users and contributors</td><td></td><td></td><td></td></tr></tbody></table>
-
-    {% hint style="warning" %}
-    This API is for demo purposes only â€” **donâ€™t** use it in production.
-    {% endhint %}
+    Minimal REST API for print partners to sync catalogs with Teeinblue.
+    Scope: **GET /catalogs** (list) and **GET /catalogs/{id}** (detail).
+  version: 1.0.0
 
 servers:
-  - url: https://petstore.example.com/v1
+  - url: https://api.printer.com/v1
+    description: Production server (example)
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ TAGS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+security:
+  - bearerAuth: []
+
 tags:
-  - name: store
-    x-page-title: Store
-    x-page-description: Manage customer orders
-    x-page-icon: store
-  - name: pets
-    x-parent: store
-    x-page-title: Pets
-    x-page-description: Everything about your pets
-    x-page-icon: paw
-  - name: admin
-    x-page-title: Admin
-    x-page-description: Internal administration endpoints
-    x-page-icon: shield-cat
+  - name: Catalogs
+    description: Endpoints for listing and retrieving catalogs
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ PATHS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  /pets:
 paths:
+  /catalogs:
     get:
-      summary: List all pets
-      tags: [pets]
-      operationId: listPets
+      tags:
+        - Catalogs
+      summary: List catalogs
+      description: Returns a paginated list of catalogs. Use `updated_at_min` for incremental sync.
+      operationId: listCatalogs
       parameters:
-        - name: limit
-          in: query
-          description: Max items to return (100 default)
-          schema: { type: integer, maximum: 100 }
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - in: query
+          name: search
+          schema:
+            type: string
+            minLength: 2
+          description: Search by catalog name.
+        - in: query
+          name: ids
+          schema:
+            type: string
+          description: Comma separated list of catalog IDs to include.
+        - in: query
+          name: updated_at_min
+          schema:
+            type: string
+            format: date-time
+          description: Only return catalogs whose `updated_at` is >= this value (ISO 8601 UTC).
+        - in: query
+          name: locale
+          schema:
+            type: string
+          description: Language for translatable fields (e.g., `vi`, `en`).
       responses:
-        "200":
-          description: A paged array of pets
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Pets" }
-      x-codeSamples:
-        - lang: cURL
-          label: CLI
-          source: |
-            curl -L https://petstore.example.com/v1/pets
-        - lang: JavaScript
-          label: Fetch
-          source: |
-            fetch('https://petstore.example.com/v1/pets')
-              .then(r => r.json())
-              .then(console.log)
-
-    post:
-      summary: Create a pet
-      tags: [pets]
-      operationId: createPets
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/Pet" }
-      responses:
-        "201": { description: Pet created }
-      x-stability: experimental
-
-  /pets/{petId}:
-    get:
-      summary: Info for a specific pet
-      tags: [pets]
-      operationId: showPetById
-      parameters:
-        - name: petId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Pet response
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Pet" }
-      deprecated: true
-      x-deprecated-sunset: 2030-12-05
-
-  /store/orders:
-    get:
-      summary: List store orders
-      tags: [store]
-      operationId: listOrders
-      responses:
-        "200":
-          description: Array of orders
+        '200':
+          description: OK
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: "#/components/schemas/Order" }
-      x-hideTryItPanel: true
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CatalogListItem'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+              example:
+                data:
+                  - id: 7
+                    name: Unisex Standard T-Shirt
+                    display_images:
+                      - thumbnail: "https://example.com/thumb.jpg"
+                        original: "https://example.com/original.jpg"
+                    updated_at: "2025-08-19T10:20:00Z"
+                pagination:
+                  page: 1
+                  per_page: 50
+                  total: 1234
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
-  /internal/metrics:
+  /catalogs/{id}:
     get:
-      summary: Platform metrics (internal use only)
-      tags: [admin]
-      operationId: getMetrics
+      tags:
+        - Catalogs
+      summary: Catalog detail
+      description: Returns full catalog details for a given ID.
+      operationId: getCatalog
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: locale
+          schema:
+            type: string
+          description: Language for translatable fields (e.g., `vi`, `en`).
       responses:
-        "200": { description: OK }
-      x-internal: true
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Catalog'
+              example:
+                id: 7
+                name: Unisex Standard T-Shirt
+                description: "<p>HTML mô tả...</p>"
+                display_images:
+                  - thumbnail: "https://example.com/thumb.jpg"
+                    original: "https://example.com/original.jpg"
+                print_areas:
+                  - name: front
+                    width: 4050
+                    height: 4650
+                    dpi: 300
+                  - name: back
+                    width: 4050
+                    height: 4650
+                    dpi: 300
+                variants:
+                  - size: S
+                    color: Black
+                    base_cost: "6.99"
+                    availability: in_stock
+                    weight: null
+                  - size: S
+                    color: Safety Pink
+                    base_cost: "6.99"
+                    availability: backorder
+                    weight: null
+                  - size: 5XL
+                    color: Ice Grey
+                    base_cost: "12.49"
+                    availability: out_of_stock
+                    weight: null
+                updated_at: "2025-08-19T10:20:00Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          description: Gone (catalog permanently removed)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
-# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ COMPONENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    RateLimited:
+      description: Too Many Requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    InternalError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
   schemas:
-    PetStatus:
-      type: string
-      enum: [available, pending, sold]
-      x-enumDescriptions:
-        available: Pet is available for adoption
-        pending: Awaiting adoption
-        sold: No longer available
-    Pet:
-      type: object
-      required: [id, name]
-      properties:
-        id: { type: integer, format: int64, example: 1 }
-        name: { type: string, example: Fluffy }
-        tag: { type: string, example: dog }
-        status: { $ref: "#/components/schemas/PetStatus" }
-    Pets:
-      type: array
-      items: { $ref: "#/components/schemas/Pet" }
-    Order:
+    Pagination:
       type: object
       properties:
-        id: { type: integer, format: int64 }
-        petId: { type: integer, format: int64 }
-        quantity: { type: integer }
-        shipDate: { type: string, format: date-time }
-        complete: { type: boolean }
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+      required:
+        - page
+        - per_page
+        - total
+
+    Image:
+      type: object
+      properties:
+        thumbnail:
+          type: string
+          format: uri
+        original:
+          type: string
+          format: uri
+      required:
+        - thumbnail
+        - original
+
+    PrintArea:
+      type: object
+      properties:
+        name:
+          type: string
+          enum: [front, back, left, right, custom]
+        width:
+          type: integer
+        height:
+          type: integer
+        dpi:
+          type: integer
+          enum: [150, 300, 600]
+      required:
+        - name
+        - width
+        - height
+        - dpi
+
+    Variant:
+      type: object
+      properties:
+        size:
+          type: string
+        color:
+          type: string
+        color_hex:
+          type: string
+          nullable: true
+          pattern: "^#?[0-9A-Fa-f]{6}$"
+        base_cost:
+          type: string
+          pattern: "^\\d+\\.\\d{2}$"
+        availability:
+          type: string
+          enum: [in_stock, backorder, out_of_stock]
+        weight:
+          type: number
+          nullable: true
+      required:
+        - size
+        - color
+        - base_cost
+        - availability
+
+    CatalogListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        display_images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+
+    Catalog:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        display_images:
+          type: array
+          items:
+            $ref: '#/components/schemas/Image'
+        print_areas:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrintArea'
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Variant'
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - description
+        - display_images
+        - print_areas
+        - variants
+
+    ErrorEnvelope:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            request_id:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+          required:
+            - code
+            - message
+      required:
+        - error
