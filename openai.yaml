@@ -1,240 +1,72 @@
-openapi: 3.0.3
-info:
-  title: Your Brand API (Beta)
-  version: 0.1.0
-  description: |
-    API cho Catalog, Orders, Shipping. Đây là bản Beta, có thể thay đổi.
-servers:
-  - url: https://api.yourdomain.com/api/beta
-    description: Production (Beta)
-  - url: https://sandbox.yourdomain.com/api/beta
-    description: Sandbox
-security:
-  - bearerAuth: []
-
-paths:
-  /catalog/products:
-    get:
-      tags: [Catalog]
-      summary: List products
-      operationId: listProducts
-      parameters:
-        - in: query
-          name: page
-          schema: { type: integer, minimum: 1, default: 1 }
-        - in: query
-          name: per_page
-          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductList'
-      x-codeSamples:
-        - lang: cURL
-          source: |
-            curl -H "Authorization: Bearer $API_KEY"                  "https://api.yourdomain.com/api/beta/catalog/products?per_page=50"
-        - lang: JavaScript (fetch)
-          source: |
-            const res = await fetch(
-              'https://api.yourdomain.com/api/beta/catalog/products?per_page=50',
-              { headers: { Authorization: `Bearer ${API_KEY}` } }
-            );
-            const data = await res.json();
-
-  /catalog/products/{product_id}:
-    get:
-      tags: [Catalog]
-      summary: Get product detail
-      operationId: getProduct
-      parameters:
-        - in: path
-          name: product_id
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Product'
-
-  /orders:
-    post:
-      tags: [Orders]
-      summary: Create order
-      operationId: createOrder
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateOrderRequest'
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-      x-codeSamples:
-        - lang: cURL
-          source: |
-            curl -X POST               -H "Authorization: Bearer $API_KEY"               -H "Content-Type: application/json"               -d @order.json               https://api.yourdomain.com/api/beta/orders
-
-  /orders/{order_id}:
-    get:
-      tags: [Orders]
-      summary: Get order
-      operationId: getOrder
-      parameters:
-        - in: path
-          name: order_id
-          required: true
-          schema: { type: string }
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Order'
-
-  /shipping/rates:
-    post:
-      tags: [Shipping]
-      summary: Get shipping rates
-      operationId: getShippingRates
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetRatesRequest'
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RateList'
-
+openapi: 3.1.0
+required: true
+schema: { type: integer, minimum: 1 }
+- in: query
+name: locale
+schema: { type: string }
+responses:
+'200':
+description: OK
+content:
+application/json:
+schema:
+$ref: '#/components/schemas/Catalog'
+'404': { description: Not Found }
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-  schemas:
-    Product:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        variants:
-          type: array
-          items: { $ref: '#/components/schemas/Variant' }
-    Variant:
-      type: object
-      properties:
-        id: { type: string }
-        sku: { type: string }
-        price: { type: number, format: float }
-        options:
-          type: object
-          additionalProperties: { type: string }
-    ProductList:
-      type: object
-      properties:
-        data:
-          type: array
-          items: { $ref: '#/components/schemas/Product' }
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-    Pagination:
-      type: object
-      properties:
-        page: { type: integer }
-        per_page: { type: integer }
-        total: { type: integer }
-
-    CreateOrderRequest:
-      type: object
-      required: [external_id, items, shipping_address]
-      properties:
-        external_id: { type: string }
-        items:
-          type: array
-          items:
-            type: object
-            required: [sku, qty]
-            properties:
-              sku: { type: string }
-              qty: { type: integer, minimum: 1 }
-              price: { type: number, format: float }
-        shipping_address:
-          $ref: '#/components/schemas/Address'
-    Order:
-      type: object
-      properties:
-        id: { type: string }
-        external_id: { type: string }
-        status: { type: string, enum: [pending, processing, shipped, delivered, canceled] }
-        items:
-          type: array
-          items:
-            type: object
-            properties:
-              sku: { type: string }
-              qty: { type: integer }
-              price: { type: number }
-        shipments:
-          type: array
-          items: { $ref: '#/components/schemas/Shipment' }
-    Address:
-      type: object
-      properties:
-        name: { type: string }
-        phone: { type: string }
-        line1: { type: string }
-        line2: { type: string }
-        city: { type: string }
-        state: { type: string }
-        postal_code: { type: string }
-        country: { type: string, minLength: 2, maxLength: 2, description: ISO-3166 alpha-2 }
-    Shipment:
-      type: object
-      properties:
-        carrier: { type: string }
-        service: { type: string }
-        tracking_number: { type: string }
-        tracking_url: { type: string }
-        shipped_at: { type: string, format: date-time }
-    GetRatesRequest:
-      type: object
-      required: [destination, items]
-      properties:
-        destination: { $ref: '#/components/schemas/Address' }
-        items:
-          type: array
-          items:
-            type: object
-            properties:
-              sku: { type: string }
-              qty: { type: integer }
-    RateList:
-      type: object
-      properties:
-        rates:
-          type: array
-          items:
-            type: object
-            properties:
-              carrier: { type: string }
-              service: { type: string }
-              currency: { type: string }
-              amount: { type: number }
+schemas:
+Pagination:
+type: object
+properties:
+page: { type: integer }
+per_page: { type: integer }
+total: { type: integer }
+CatalogListItem:
+type: object
+properties:
+id: { type: integer }
+name: { type: string }
+display_images:
+type: array
+items:
+$ref: '#/components/schemas/Image'
+updated_at: { type: string, format: date-time }
+Catalog:
+type: object
+properties:
+id: { type: integer }
+name: { type: string }
+description: { type: string }
+display_images:
+type: array
+items:
+$ref: '#/components/schemas/Image'
+print_areas:
+type: array
+items:
+$ref: '#/components/schemas/PrintArea'
+variants:
+type: array
+items:
+$ref: '#/components/schemas/Variant'
+updated_at: { type: string, format: date-time }
+Image:
+type: object
+properties:
+thumbnail: { type: string, format: uri }
+original: { type: string, format: uri }
+PrintArea:
+type: object
+properties:
+name: { type: string, enum: [front, back, left, right, custom] }
+width: { type: integer }
+height: { type: integer }
+dpi: { type: integer, enum: [150, 300, 600] }
+Variant:
+type: object
+properties:
+size: { type: string }
+color: { type: string }
+color_hex: { type: [string, 'null'] }
+base_cost: { type: string }
+availability: { type: string, enum: [in_stock, backorder, out_of_stock] }
+weight: { type: [number, 'null'] }
