@@ -7,8 +7,8 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://api.printer.com/v1
-    description: Production server (example)
+  - url: https://api.example.com/v1
+    description: Base URL
 
 security:
   - bearerAuth: []
@@ -21,9 +21,9 @@ paths:
   /catalogs:
     get:
       tags:
-        - Catalogs test
+        - Catalogs
       summary: List catalogs
-      description: Returns a paginated list of catalogs. Use `updated_at_min` for incremental sync.
+      description: Returns a paginated list of catalogs.
       operationId: listCatalogs
       parameters:
         - in: query
@@ -45,22 +45,6 @@ paths:
             type: string
             minLength: 2
           description: Search by catalog name.
-        - in: query
-          name: ids
-          schema:
-            type: string
-          description: Comma separated list of catalog IDs to include.
-        - in: query
-          name: updated_at_min
-          schema:
-            type: string
-            format: date-time
-          description: Only return catalogs whose `updated_at` is >= this value (ISO 8601 UTC).
-        - in: query
-          name: locale
-          schema:
-            type: string
-          description: Language for translatable fields (e.g., `vi`, `en`).
       responses:
         '200':
           description: OK
@@ -79,7 +63,8 @@ paths:
                 data:
                   - id: 7
                     name: Unisex Standard T-Shirt
-                    display_images:
+                    base_cost: 10.5
+                    mockups:
                       - thumbnail: "https://example.com/thumb.jpg"
                         original: "https://example.com/original.jpg"
                     updated_at: "2025-08-19T10:20:00Z"
@@ -93,8 +78,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '429':
           $ref: '#/components/responses/RateLimited'
-        '500':
-          $ref: '#/components/responses/InternalError'
 
   /catalogs/{id}:
     get:
@@ -110,11 +93,6 @@ paths:
           schema:
             type: integer
             minimum: 1
-        - in: query
-          name: locale
-          schema:
-            type: string
-          description: Language for translatable fields (e.g., `vi`, `en`).
       responses:
         '200':
           description: OK
@@ -125,8 +103,8 @@ paths:
               example:
                 id: 7
                 name: Unisex Standard T-Shirt
-                description: "<p>HTML mô tả...</p>"
-                display_images:
+                description: "<p>The personalized Standard T-Shirt is the perfect canvas for self-expression and individual style.<p>"
+                mockups:
                   - thumbnail: "https://example.com/thumb.jpg"
                     original: "https://example.com/original.jpg"
                 print_areas:
@@ -157,12 +135,8 @@ paths:
                 updated_at: "2025-08-19T10:20:00Z"
         '404':
           $ref: '#/components/responses/NotFound'
-        '410':
-          description: Gone (catalog permanently removed)
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
 
 components:
   securitySchemes:
@@ -196,12 +170,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorEnvelope'
-    InternalError:
-      description: Internal Server Error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorEnvelope'
 
   schemas:
     Pagination:
@@ -218,7 +186,7 @@ components:
         - per_page
         - total
 
-    Image:
+    Mockup:
       type: object
       properties:
         thumbnail:
@@ -228,7 +196,6 @@ components:
           type: string
           format: uri
       required:
-        - thumbnail
         - original
 
     PrintArea:
@@ -283,10 +250,10 @@ components:
           type: integer
         name:
           type: string
-        display_images:
+        mockups:
           type: array
           items:
-            $ref: '#/components/schemas/Image'
+            $ref: '#/components/schemas/Mockup'
         updated_at:
           type: string
           format: date-time
@@ -303,10 +270,10 @@ components:
           type: string
         description:
           type: string
-        display_images:
+        mockups:
           type: array
           items:
-            $ref: '#/components/schemas/Image'
+            $ref: '#/components/schemas/Mockup'
         print_areas:
           type: array
           items:
@@ -322,7 +289,7 @@ components:
         - id
         - name
         - description
-        - display_images
+        - mockups
         - print_areas
         - variants
 
@@ -346,3 +313,4 @@ components:
             - message
       required:
         - error
+
