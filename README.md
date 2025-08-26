@@ -1,5 +1,5 @@
 ---
-description: Teeinblue print partner API
+description: Teeinblue Print Partner API
 ---
 
 # Overview
