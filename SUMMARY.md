@@ -10,6 +10,6 @@
       spec:
         ref:
           kind: openapi
-          spec: test-openai-url-1
+          spec: openai
     ```
 * [Shipment notification](shipment-notification.md)
