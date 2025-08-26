@@ -10,6 +10,6 @@
       spec:
         ref:
           kind: openapi
-          spec: test-10
+          spec: test-openai-url-1
     ```
-  * [Orders](api-reference/orders.md)
+* [Shipment notification](shipment-notification.md)
