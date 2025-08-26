@@ -39,7 +39,7 @@ paths:
           schema: { type: integer, default: 50 }
         - in: query
           name: search
-          schema: { type: string, minLength: 2 }
+          schema: { type: string }
           description: Search by catalog name.
       responses:
         '200':
