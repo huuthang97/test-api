@@ -52,14 +52,14 @@ paths:
                   data:
                     type: array
                     items: { $ref: '#/components/schemas/CatalogListItem' }
-                  pagination: { $ref: '#/components/schemas/Pagination' }
+                  meta: { $ref: '#/components/schemas/Meta' }
               example:
                 data:
                   - id: 7
                     name: Unisex Standard T-Shirt
                     mockups:
                       - url: "https://example.com/original.jpg"
-                pagination: { page: 1, per_page: 50, total: 1234 }
+                meta: { page: 1, per_page: 50, total: 1234 }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
@@ -234,7 +234,7 @@ components:
               message: Resource not found
 
   schemas:
-    Pagination:
+    Meta:
       type: object
       properties:
         page:     { type: integer }
