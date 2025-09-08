@@ -90,9 +90,9 @@ paths:
                   - { name: front, width: 4050, height: 4650, dpi: 300 }
                   - { name: back,  width: 4050, height: 4650, dpi: 300 }
                 variants:
-                  - { size: S, color: Black,      base_cost: "6.99", availability: in_stock,     weight: null }
-                  - { size: S, color: Safety Pink, base_cost: "6.99", availability: in_stock,    weight: null }
-                  - { size: 5XL, color: Ice Grey,  base_cost: "12.49", availability: out_of_stock, weight: null }
+                  - { variant_sku: 1, size: S, color: Black, base_cost: "6.99", availability: in_stock, weight: null }
+                  - { variant_sku: 2, size: S, color: Safety Pink, base_cost: "6.99", availability: in_stock,    weight: null }
+                  - { variant_sku: 3, size: 5XL, color: Ice Grey,  base_cost: "12.49", availability: out_of_stock, weight: null }
         '404': { $ref: '#/components/responses/NotFound' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
@@ -108,7 +108,7 @@ paths:
           application/json:
             schema:
               type: object
-              required: [address, line_items, shipment_notification_url]
+              required: [shipping_address, line_items, shipment_notification_url]
               properties:
                 reference_order_id:
                   type: string
@@ -122,21 +122,24 @@ paths:
                   type: string
                   description: A webhook callback URL for shipment updates. If provided, the print provider will send an HTTP POST request to this URL when the order ships, including tracking details (e.g. tracking number, tracking url, tracking company). This allows your system to automatically receive delivery updates without polling the API.
                   example: "https://api.teeinblue.com/api/webhook/print-provider?order-token=7d1e0f01ff56119101046f4f27a88412"
-                address:
+                shipping_address:
                   type: object
                   description: Shipping address
-                  required: [first_name, last_name, address1, city, state, zip, country, phone]
+                  required: [first_name, last_name, address1, city, state, zip, country, country_code]
                   properties:
-                    first_name: { type: string, example: "Charles" }
-                    last_name:  { type: string, example: "Chambers" }
-                    company:    { type: string, nullable: true, example: null }
-                    address1:   { type: string, description: Primary street line., example: "130 Stonegate Road" }
-                    address2:   { type: string, nullable: true, description: Secondary address line., example: null }
-                    city:       { type: string, example: "Buffalo Grove" }
-                    state:      { type: string, description: State/Province code., example: "IL" }
                     zip:        { type: string, description: Postal/ZIP code., example: "60089" }
-                    country:    { type: string, description: ISO 3166-1 alpha-2 country code., example: "US" }
-                    phone:      { type: string, example: null }
+                    city:       { type: string, example: "Buffalo Grove" }
+                    phone:      { type: string }
+                    company:    { type: string }
+                    country:    { type: string, example: "France" }
+                    address1:   { type: string, description: Primary street line., example: "1999 Rue Lucie Aubrac" }
+                    address2:   { type: string, nullable: true, description: Secondary address line., example: null }
+                    province:      { type: string, description: State/Province. }
+                    first_name: { type: string, example: "John" }
+                    last_name:  { type: string, example: "Carry" }
+                    country_code: { type: string, example: "FR" }
+                    province_code: { type: string}
+                    
                 line_items:
                   type: array
                   description: List of items to fulfill.
@@ -161,17 +164,19 @@ paths:
               reference_order_id: "#1001"
               test_order: false
               shipment_notification_url: https://api.teeinblue.com/api/webhook/print-provider?order-token=7d1e0f01ff56119101046f4f27a88412
-              address:
+              shipping_address:
                 zip: "60089"
                 city: "Buffalo Grove"
-                phone: null
-                state: "IL"
+                phone: "0123456789"
                 company: null
-                country: "US"
-                address1: "10 Green Road"
+                country: "France"
+                address1: "999 Rue Lucie Aubrac"
                 address2: null
+                province: null
                 last_name: "John"
                 first_name: "Carry"
+                country_code: "FR"
+                province_code: null
               line_items:
                 - quantity: 1
                   print_areas:
@@ -265,6 +270,7 @@ components:
     Variant:
       type: object
       properties:
+        variant_sku: { type: string }
         size:        { type: string }
         color:       { type: string }
         color_hex:   { type: string }
@@ -273,7 +279,7 @@ components:
           type: string
           enum: [in_stock, out_of_stock]
         weight:      { type: number, nullable: true }
-      required: [size, color, base_cost, availability]
+      required: [variant_sku, size, color, base_cost, availability]
 
     CatalogListItem:
       type: object
